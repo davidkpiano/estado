@@ -58,7 +58,7 @@ export class StateMachine<
 > {
   private _context: () => TContext;
   public get context(): TContext {
-    return resolveContext(this._context(), this.options.context);
+    return resolveContext(this._context(), this.implementations.context);
   }
   /**
    * The machine's own version.
@@ -73,7 +73,7 @@ export class StateMachine<
    */
   public delimiter: string;
 
-  public options: MachineImplementations<TContext, TEvent>;
+  public implementations: MachineImplementations<TContext, TEvent>;
 
   public schema: MachineSchema<TContext, TEvent>;
 
@@ -96,7 +96,7 @@ export class StateMachine<
     options?: Partial<MachineImplementations<TContext, TEvent>>
   ) {
     this.key = config.key || config.id || '(machine)';
-    this.options = Object.assign(
+    this.implementations = Object.assign(
       createDefaultOptions(config.context!),
       options
     );
@@ -138,7 +138,7 @@ export class StateMachine<
   public provide(
     implementations: Partial<MachineImplementations<TContext, TEvent>>
   ): StateMachine<TContext, TEvent> {
-    const { actions, guards, actors, delays } = this.options;
+    const { actions, guards, actors, delays } = this.implementations;
 
     return new StateMachine(this.config, {
       actions: { ...actions, ...implementations.actions },

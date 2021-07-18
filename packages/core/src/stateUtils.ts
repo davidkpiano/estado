@@ -423,7 +423,7 @@ export function formatTransition<
             isString(_target) && _target[0] === stateNode.machine.delimiter
         )
       : true;
-  const { guards } = stateNode.machine.options;
+  const { guards } = stateNode.machine.implementations;
   const target = resolveTarget(stateNode, normalizedTarget);
   if (!IS_PRODUCTION && (transitionConfig as any).cond) {
     throw new Error(
@@ -1664,7 +1664,10 @@ function resolveActionsAndContext<
   const resolvedActions: Array<ActionObject<TContext, TEvent>> = [];
   const raiseActions: Array<RaiseActionObject<TEvent>> = [];
   const preservedContexts: [TContext, ...TContext[]] = [context];
-  const actionObjects = toActionObjects(actions, machine.options.actions);
+  const actionObjects = toActionObjects(
+    actions,
+    machine.implementations.actions
+  );
 
   function resolveAction(actionObject) {
     switch (actionObject.type) {
@@ -1685,7 +1688,7 @@ function resolveActionsAndContext<
           actionObject as SendAction<TContext, TEvent, AnyEventObject>,
           context,
           _event,
-          machine.options.delays
+          machine.implementations.delays
         );
         if (!IS_PRODUCTION) {
           // warn after resolving as we can create better contextual message here
@@ -1718,7 +1721,7 @@ function resolveActionsAndContext<
             condition.guard &&
             toGuardDefinition(
               condition.guard,
-              (guardType) => machine.options.guards[guardType]
+              (guardType) => machine.implementations.guards[guardType]
             );
           return (
             !guard || evaluateGuard(guard, context, _event, currentState as any)
@@ -1728,7 +1731,7 @@ function resolveActionsAndContext<
         if (matchedActions) {
           toActionObjects(
             toArray(matchedActions),
-            machine.options.actions
+            machine.implementations.actions
           ).forEach(resolveAction);
         }
         break;
@@ -1743,7 +1746,7 @@ function resolveActionsAndContext<
         if (matchedActions) {
           toActionObjects(
             toArray(matchedActions),
-            machine.options.actions
+            machine.implementations.actions
           ).forEach(resolveAction);
         }
         break;
@@ -1774,7 +1777,7 @@ function resolveActionsAndContext<
           actionObject as InvokeAction,
           context,
           _event,
-          machine.options.actors
+          machine.implementations.actors
         );
         if (!IS_PRODUCTION && !invokeAction.ref) {
           warn(
@@ -1797,7 +1800,7 @@ function resolveActionsAndContext<
       default:
         const resolvedActionObject = toActionObject(
           actionObject,
-          machine.options.actions
+          machine.implementations.actions
         );
         const { exec } = resolvedActionObject;
         if (exec) {

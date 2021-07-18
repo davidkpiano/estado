@@ -119,11 +119,11 @@ export function useInterpret<
   // This mutation assignment is safe because the service instance is only used
   // in one place -- this hook's caller.
   useIsomorphicLayoutEffect(() => {
-    Object.assign(service.machine.options.actions, actions);
+    Object.assign(service.machine.implementations.actions, actions);
   }, [actions]);
 
   useIsomorphicLayoutEffect(() => {
-    Object.assign(service.machine.options.actors, actors);
+    Object.assign(service.machine.implementations.actors, actors);
   }, [actors]);
 
   useReactEffectActions(service);

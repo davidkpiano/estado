@@ -284,11 +284,11 @@ export class StateNode<
         );
 
         if (
-          !this.machine.options.actors[resolvedSrc.type] &&
+          !this.machine.implementations.actors[resolvedSrc.type] &&
           isFunction(invokeConfig.src)
         ) {
-          this.machine.options.actors = {
-            ...this.machine.options.actors,
+          this.machine.implementations.actors = {
+            ...this.machine.implementations.actors,
             [resolvedSrc.type]: invokeConfig.src
           };
         }

@@ -682,7 +682,7 @@ export class Interpreter<
     action: InvokeActionObject | ActionObject<TContext, TEvent>,
     state: State<TContext, TEvent, TTypestate>,
     actionFunctionMap: ActionFunctionMap<TContext, TEvent> = this.machine
-      .options.actions
+      .implementations.actions
   ): void {
     const { context, _event } = state;
     const actionOrExec =
