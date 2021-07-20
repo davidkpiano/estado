@@ -652,6 +652,11 @@ export function resolveActions<TContext, TEvent extends EventObject>(
               return [];
             }
 
+            const actionObjects = toActionObjects(
+              toArray(matchedActions),
+              machine.options.actions
+            );
+
             const [
               resolvedActionsFromChoose,
               resolvedContextFromChoose
@@ -660,7 +665,7 @@ export function resolveActions<TContext, TEvent extends EventObject>(
               currentState,
               updatedContext,
               _event,
-              toActionObjects(toArray(matchedActions), machine.options.actions),
+              actionObjects,
               preserveActionOrder
             );
             updatedContext = resolvedContextFromChoose;
@@ -713,7 +718,7 @@ export function resolveActions<TContext, TEvent extends EventObject>(
             if (exec && preservedContexts) {
               const contextIndex = preservedContexts.length - 1;
               resolvedActionObject.exec = (_ctx, ...args) => {
-                exec?.(preservedContexts[contextIndex], ...args);
+                return exec?.(preservedContexts[contextIndex], ...args);
               };
             }
             return resolvedActionObject;

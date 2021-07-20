@@ -37,17 +37,14 @@ export function useReactEffectActions<TContext, TEvent extends EventObject>(
       if (currentState.actions.length) {
         const reactEffectActions = currentState.actions.filter(
           (action): action is ReactActionObject<TContext, TEvent> => {
-            return (
-              typeof action.exec === 'function' &&
-              '__effect' in (action as ReactActionObject<TContext, TEvent>).exec
-            );
+            return typeof action.exec === 'function' && '__effect' in action;
           }
         );
 
         const [effectActions, layoutEffectActions] = partition(
           reactEffectActions,
           (action): action is ReactActionObject<TContext, TEvent> => {
-            return action.exec.__effect === ReactEffectType.Effect;
+            return action.__effect === ReactEffectType.Effect;
           }
         );
 

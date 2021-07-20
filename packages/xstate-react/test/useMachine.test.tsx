@@ -349,7 +349,7 @@ describe('useMachine hook', () => {
   it('should capture all actions', (done) => {
     let count = 0;
 
-    const machine = createMachine<any, { type: 'EVENT' }>({
+    const machine = createMachine({
       initial: 'active',
       states: {
         active: {
@@ -362,6 +362,55 @@ describe('useMachine hook', () => {
           }
         }
       }
+    });
+
+    const App = () => {
+      const [stateCount, setStateCount] = useState(0);
+      const [state, send] = useMachine(machine);
+
+      React.useEffect(() => {
+        send('EVENT');
+        send('EVENT');
+        send('EVENT');
+        send('EVENT');
+      }, []);
+
+      React.useEffect(() => {
+        setStateCount((c) => c + 1);
+      }, [state]);
+
+      return <div data-testid="count">{stateCount}</div>;
+    };
+
+    const { getByTestId } = render(<App />);
+
+    const countEl = getByTestId('count');
+
+    // Component should only rerender twice:
+    // - 1 time for the initial state
+    // - and 1 time for the four (batched) events
+    expect(countEl.textContent).toEqual('2');
+    expect(count).toEqual(4);
+    done();
+  });
+
+  it('should capture all actions with preserveActionOrder = true', (done) => {
+    let count = 0;
+
+    const machine = createMachine({
+      initial: 'active',
+      states: {
+        active: {
+          on: {
+            EVENT: {
+              actions: asEffect(() => {
+                count++;
+              })
+            }
+          }
+        }
+      },
+      preserveActionOrder: true
     });
 
     const App = () => {

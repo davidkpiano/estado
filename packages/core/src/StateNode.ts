@@ -382,11 +382,11 @@ class StateNode<
     // TODO: deprecate (entry)
     this.onEntry = toArray(
       this.config.entry || this.config.onEntry
-    ).map((action) => toActionObject(action));
+    ).map((action) => toActionObject(action, this.machine.options.actions));
     // TODO: deprecate (exit)
     this.onExit = toArray(
       this.config.exit || this.config.onExit
-    ).map((action) => toActionObject(action));
+    ).map((action) => toActionObject(action, this.machine.options.actions));
     this.meta = this.config.meta;
     this.doneData =
       this.type === 'final'
@@ -1858,7 +1858,10 @@ class StateNode<
 
     const transition = {
       ...transitionConfig,
-      actions: toActionObjects(toArray(transitionConfig.actions)),
+      actions: toActionObjects(
+        toArray(transitionConfig.actions),
+        this.machine.options.actions
+      ),
       cond: toGuard(transitionConfig.cond, guards),
       target,
       source: this as any,
