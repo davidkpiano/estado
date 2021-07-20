@@ -1,5 +1,18 @@
 # xstate
 
+## 4.23.1
+
+### Patch Changes
+
+- [`141c91cf`](https://github.com/statelyai/xstate/commit/141c91cffd1d7c1ec2e82186834cb977b72fb4d4) [#2436](https://github.com/statelyai/xstate/pull/2436) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue where, when using `model.createMachine`, state's context was incorrectly inferred as `any` after refinement with `.matches(...)`, e.g.
+
+  ```ts
+  // `state.context` became `any` erroneously
+  if (state.matches('inactive')) {
+    console.log(state.context.count);
+  }
+  ```
+
 ## 4.23.0
 
 ### Minor Changes
