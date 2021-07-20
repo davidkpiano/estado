@@ -11,6 +11,8 @@ import {
   Prop
 } from './model.types';
 
+export * from './model.types';
+
 export function createModel<TContext, TEvent extends EventObject>(
   initialContext: TContext
 ): Model<TContext, TEvent, void>;
