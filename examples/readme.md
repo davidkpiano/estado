@@ -5,6 +5,7 @@
    - [template-js](./template-js)
    - [template-ts](./template-ts)
    - [template-react-ts](./template-react-ts)
+   - [template-svelte-js](./template-svelte-js)
    - [template-vue-ts](./template-vue-ts)
 
 2. Give it a good name (and don't forget to change the `"name"` in `package.json`)
