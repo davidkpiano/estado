@@ -1,4 +1,13 @@
 import { createMachine } from '../src';
+import {
+  cancel,
+  choose,
+  log,
+  send,
+  sendParent,
+  sendUpdate,
+  stop
+} from '../src/actions';
 import { createModel } from '../src/model';
 
 describe('createModel', () => {
@@ -169,7 +178,7 @@ describe('createModel', () => {
           on: {
             updateName: {
               // pre-defined assign action
-              actions: assignName
+              actions: [assignName]
             },
             updateAge: {
               // inline assign action
@@ -197,6 +206,233 @@ describe('createModel', () => {
     );
 
     expect(updatedState.context.age).toEqual(42);
+  });
+
+  it('can model actions', () => {
+    const userModel = createModel(
+      {
+        name: 'David',
+        age: 30
+      },
+      {
+        actions: {
+          greet: (message: string) => ({ message })
+        }
+      }
+    );
+
+    createMachine<typeof userModel>({
+      context: userModel.initialContext,
+      initial: 'active',
+      entry: { type: 'greet', message: 'hello' },
+      exit: { type: 'greet', message: 'goodbye' },
+      states: {
+        active: {
+          entry: [userModel.actions.greet('hello')]
+        }
+      }
+    });
+
+    createMachine<typeof userModel>({
+      context: userModel.initialContext,
+      // @ts-expect-error
+      entry: { type: 'greet' } // missing message
+    });
+
+    createMachine<typeof userModel>({
+      context: userModel.initialContext,
+      // @ts-expect-error
+      entry: { type: 'fake' } // wrong message
+    });
+  });
+
+  it('works with built-in actions', () => {
+    const model = createModel(
+      {},
+      {
+        events: {
+          SAMPLE: () => ({})
+        },
+        actions: {
+          custom: () => ({})
+        }
+      }
+    );
+
+    createMachine<typeof model>({
+      context: model.initialContext,
+      entry: [
+        model.actions.custom(),
+        // raise('SAMPLE'),
+        send('SAMPLE'),
+        sendParent('SOMETHING'),
+        sendUpdate(),
+        // respond('SOMETHING'),
+        log('something'),
+        cancel('something'),
+        stop('something'),
+        model.assign({}),
+        choose([])
+      ],
+      exit: [
+        model.actions.custom(),
+        // raise('SAMPLE'),
+        send('SAMPLE'),
+        sendParent('SOMETHING'),
+        sendUpdate(),
+        // respond('SOMETHING'),
+        log('something'),
+        cancel('something'),
+        stop('something'),
+        model.assign({}),
+        choose([])
+      ],
+      on: {
+        SAMPLE: {
+          actions: [
+            model.actions.custom(),
+            // raise('SAMPLE'),
+            send('SAMPLE'),
+            sendParent('SOMETHING'),
+            sendUpdate(),
+            // respond('SOMETHING'),
+            log('something'),
+            cancel('something'),
+            stop('something'),
+            model.assign({}),
+            choose([])
+          ]
+        }
+      },
+      initial: 'someState',
+      states: {
+        someState: {
+          entry: [
+            model.actions.custom(),
+            // raise('SAMPLE'),
+            send('SAMPLE'),
+            sendParent('SOMETHING'),
+            sendUpdate(),
+            // respond('SOMETHING'),
+            log('something'),
+            cancel('something'),
+            stop('something'),
+            model.assign({}),
+            choose([])
+          ],
+          exit: [
+            model.actions.custom(),
+            // raise('SAMPLE'),
+            send('SAMPLE'),
+            sendParent('SOMETHING'),
+            sendUpdate(),
+            // respond('SOMETHING'),
+            log('something'),
+            cancel('something'),
+            stop('something'),
+            model.assign({}),
+            choose([])
+          ]
+        }
+      }
+    });
+  });
+
+  it('should strongly type action implementations', () => {
+    const model = createModel(
+      {},
+      {
+        events: {
+          SAMPLE: () => ({})
+        },
+        actions: {
+          custom: (param: string) => ({ param })
+        }
+      }
+    );
+
+    createMachine<typeof model>(
+      {
+        context: {}
+      },
+      {
+        actions: {
+          custom: (_ctx, _e, { action }) => {
+            action.param.toUpperCase();
+
+            // @ts-expect-error
+            action.param.whatever();
+
+            // @ts-expect-error
+            action.unknown;
+          }
+        }
+      }
+    );
+  });
+
+  it('should strongly type action implementations with model.createMachine(...)', () => {
+    const model = createModel(
+      {},
+      {
+        events: {
+          SAMPLE: () => ({})
+        },
+        actions: {
+          custom: (param: string) => ({ param })
+        }
+      }
+    );
+
+    model.createMachine(
+      {
+        context: {}
+      },
+      {
+        actions: {
+          custom: (_ctx, _e, { action }) => {
+            action.param.toUpperCase();
+
+            // @ts-expect-error
+            action.param.whatever();
+
+            // @ts-expect-error
+            action.unknown;
+          }
+        }
+      }
+    );
+  });
+
+  it('should disallow string actions for non-simple actions', () => {
+    const model = createModel(
+      {},
+      {
+        events: {
+          SAMPLE: () => ({})
+        },
+        actions: {
+          simple: () => ({}),
+          custom: (param: string) => ({ param })
+        }
+      }
+    );
+
+    model.createMachine({
+      entry: ['simple', { type: 'custom', param: 'something' }],
+
+      // @ts-expect-error
+      exit: ['custom'],
+      initial: 'test',
+      states: {
+        test: {
+          entry: ['simple', { type: 'custom', param: 'something' }],
+
+          // @ts-expect-error
+          exit: ['custom']
+        }
+      }
+    });
   });
 
   it('should typecheck `createMachine` for model without creators', () => {
@@ -237,5 +473,66 @@ describe('createModel', () => {
         inactive: {}
       }
     });
+  });
+
+  it('should not allow using events if creators have not been configured', () => {
+    const model = createModel({ count: 0 });
+
+    // this is a type test for something that is not available at runtime so we suppress runtime error with try/catch
+    try {
+      // this should not end up being `any`
+      // @ts-expect-error
+      model.events.test();
+    } catch (err) {}
+  });
+
+  it('should not allow using actions if creators have not been configured', () => {
+    const model = createModel({ count: 0 });
+
+    // this is a type test for something that is not available at runtime so we suppress runtime error with try/catch
+    try {
+      // this should not end up being `any`
+      // @ts-expect-error
+      model.actions.test();
+    } catch (err) {}
+  });
+
+  it('should allow for the action type to be explicitly given when creators have not been configured', () => {
+    const model = createModel<
+      { count: number },
+      { type: 'EV' },
+      { type: 'fooAction' }
+    >({ count: 0 });
+
+    createMachine<typeof model>({
+      context: model.initialContext,
+      initial: 'a',
+      states: {
+        a: {
+          entry: 'fooAction'
+        },
+        b: {
+          // @ts-expect-error
+          entry: 'barAction'
+        }
+      }
+    });
+  });
+
+  it('should keep the context type on the state after using `state.matches`', () => {
+    const model = createModel<{ count: number }, { type: 'INC' }>({ count: 0 });
+
+    const machine = model.createMachine({
+      context: model.initialContext,
+      states: {
+        a: {}
+      }
+    });
+
+    if (machine.initialState.matches('a')) {
+      machine.initialState.context.count;
+      // @ts-expect-error
+      machine.initialState.context.unknown;
+    }
   });
 });
